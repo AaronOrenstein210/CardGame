@@ -3,13 +3,16 @@
 from random import randrange
 from time import sleep
 from player import Player
+from dice import Dice
+import sys
 
-roll_strings = [["   "," O ","   "], ["  O","   ","O  "], ["  O"," O ","O  "],
-                    ["O O","   ","O O"], ["O O"," O ","O O"], ["O O","O O","O O"]]
+num_dice = 10
 
 def main():
+    global num_dice
+
     #Initialize our players
-    players = [Player("Aaron"),Player("Kyle")]
+    players = [Player("Aaron", num_dice),Player("Kyle", num_dice)]
 
     while False:
         #Ask if we are creating a new player
@@ -29,81 +32,27 @@ def main():
                 if name in [x.name for x in players]:
                     print ("Name already in use")
                 else:
-                    players.append(Player(name))
+                    players.append(Player(name, num_dice))
                     break
         #Ask again if anything else is inputed
-    print ("Players:", [x.name for x in players])
+
+    #Print player names
+    print ("Players: ", end="")
+    for idx, player in enumerate(players):
+        print (player.name, end=(", " if idx != len(players)-1 else "\n\n"))
+
+    #Create dice object
+    dice = Dice(num_dice)
 
     #Keep playing until playing = false
     playing = True
     while playing:
         for player in players:
-            playing = playTurn(player)
+            playing = player.playTurn(dice)
             print ()
             if not playing:
                 break
+            sys.stdout.flush()
+            sleep(1)
 
-def playTurn(player):
-    #Roll dice
-    dice = [0,0,0]
-    print (player.name,"rolled:", rollDice(dice))
-    printRoll(dice)
-
-    #Get all combinations of dice values
-    combos = getCombinations(dice)
-
-    #Cross off numbers
-    while player.nums[0] in combos:
-        num = player.nums.pop(0)
-        print ("Crossed off", num)
-        print ("Left to go:", player.nums)
-        if len(player.nums) == 0:
-            print (player.name, "Wins!")
-            return False
-    return True
-    
-def getCombinations(dice):
-    combos = []
-    #There are 2^num_dice cominbations of dice
-    for num in range (1, pow(2,len(dice))):
-        #binary holds 1 and 0 values for which dice we will add up
-        binary = [0] * len(dice)
-        #power holds which spot we are at in binary (2 to what power)
-        power = len(binary) - 1
-        temp = num
-        while temp > 0 and power >= 0:
-            #If temp is even, divide by two and move to the next binary spot
-            if temp % 2 == 0:
-                temp /= 2
-                power -= 1
-            #If temp is odd, subtract 1 and set the current binary spot to 1
-            else:
-                temp -= 1
-                binary[power] = 1
-        #Add up the combination of dice specified in the binary array
-        ans = 0
-        for use, val in zip(binary, dice):
-            ans += val * use
-        if ans not in combos:
-            combos.append(ans)
-    return combos
-
-#Fill up an array with random numbers (Roll the dice)
-def rollDice(dice):
-    roll = ""
-    for i in range(len(dice)):
-        dice[i] = randrange(6) + 1
-        roll += str(dice[i])
-        roll += "" if i == len(dice) - 1 else ", "
-    return roll
-
-def printRoll(dice):
-    global roll_strings
-    top = " -----  " * 3
-    strings = ["| "] * 3
-    for idx, val in enumerate(dice):
-        for i in range(3):
-            strings[i] += roll_strings[val-1][i]
-            strings[i] += " | | " if idx != len(dice)-1 else " |"
-    print (top+"\n"+strings[0]+"\n"+strings[1]+"\n"+strings[2]+"\n"+top+"\n")
 main()
